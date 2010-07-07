@@ -57,9 +57,20 @@ if ARGV.include?('-d')
   end
 
   if File.exist?(pidpath)
-    STDERR.puts "#{pidpath} exits! Make sure the worker isn't still running and try again after rm #{pidpath}"
+    pid = File.new(pidpath).readline
+    if File.exists?("/proc/#{pid}") # something is running with that pid
+      STDERR.puts
+      STDERR.puts "!! Error"
+      STDERR.puts "!! #{pidpath} exists and points to running process with pid #{pid}."
+      STDERR.puts "!! Remove the pidfile if appropriate."
+      STDERR.puts
+    else
+      STDERR.puts "Deleting stale pid file #{pidpath} containing pid #{pid}"
+      File.delete(pidpath)
+    end
     exit(1)
   end
+
 
   require File.dirname(__FILE__) + '/../lib/async_observer/daemonize'
   AsyncObserver::Daemonize.detach(pidpath) do
