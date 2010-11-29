@@ -20,12 +20,18 @@ require 'open3'
 
 module AsyncObserver; end
 module AsyncObserver::Util
-  def log_bracketed(name)
+  def log_bracketed(name, log_elapsed_time=false)
     begin
-      RAILS_DEFAULT_LOGGER.info "#!#{name}!begin!#{Time.now.utc.xmlschema(6)}"
+      start_time = Time.now.utc
+      RAILS_DEFAULT_LOGGER.info "#!#{name}!begin!#{start_time.xmlschema(6)}"
       yield()
     ensure
-      RAILS_DEFAULT_LOGGER.info "#!#{name}!end!#{Time.now.utc.xmlschema(6)}"
+      end_time = Time.now.utc
+      if log_elapsed_time
+        elapsed = end_time - start_time
+        RAILS_DEFAULT_LOGGER.info "#!#{name}!elapsed!#{"%0.6f-seconds" % elapsed}"
+      end
+      RAILS_DEFAULT_LOGGER.info "#!#{name}!end!#{end_time.xmlschema(6)}"
     end
   end
 end
