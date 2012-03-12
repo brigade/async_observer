@@ -107,12 +107,12 @@ class << ActiveRecord::Base
     @async_hooks ||= Hash.new do |hash, hook|
       ahook = :"_async_#{hook}"
 
-      # This is for the producer's benefit
-      send(hook){|o| async_send(ahook, o)}
-
       # This is for the worker's benefit
       code = "def #{ahook}(o) run_async_hooks(#{hook.inspect}, o) end"
       instance_eval(code, __FILE__, __LINE__ - 1)
+
+      # This is for the producer's benefit
+      send(hook){|o| o.class.async_send(ahook, o)}
 
       hash[hook] = []
     end
