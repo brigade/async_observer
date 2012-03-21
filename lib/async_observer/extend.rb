@@ -112,7 +112,7 @@ class << ActiveRecord::Base
       instance_eval(code, __FILE__, __LINE__ - 1)
 
       # This is for the producer's benefit
-      send(hook){|o| o.class.async_send(ahook, o)}
+      send(hook){|o| async_send(ahook, o)}
 
       hash[hook] = []
     end
