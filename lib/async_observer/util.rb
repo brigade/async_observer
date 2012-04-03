@@ -23,15 +23,15 @@ module AsyncObserver::Util
   def log_bracketed(name, log_elapsed_time=false)
     begin
       start_time = Time.now.utc
-      RAILS_DEFAULT_LOGGER.info "#!#{name}!begin!#{start_time.xmlschema(6)}"
+      ::Rails.logger.info "#!#{name}!begin!#{start_time.xmlschema(6)}"
       yield()
     ensure
       end_time = Time.now.utc
       if log_elapsed_time
         elapsed = end_time - start_time
-        RAILS_DEFAULT_LOGGER.info "#!#{name}!elapsed!#{"%0.6f-seconds" % elapsed}"
+        ::Rails.logger.info "#!#{name}!elapsed!#{"%0.6f-seconds" % elapsed}"
       end
-      RAILS_DEFAULT_LOGGER.info "#!#{name}!end!#{end_time.xmlschema(6)}"
+      ::Rails.logger.info "#!#{name}!end!#{end_time.xmlschema(6)}"
     end
   end
 end
