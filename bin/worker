@@ -28,9 +28,8 @@ def load_rails_and_run
   # breaks __FILE__, which we use below.
   begin
     puts "#!load-rails!begin!#{Time.now.utc.xmlschema(6)}"
-    require File.expand_path(File.dirname(__FILE__) + '/../../../../config/boot')
-    puts "RAILS_ROOT=#{RAILS_ROOT.inspect}"
-    require RAILS_ROOT + '/config/environment'
+    require File.expand_path(File.dirname(__FILE__) + '/../../../../config/environment')
+    puts "RAILS_ROOT=#{Rails.root.inspect}"
   ensure
     puts "#!load-rails!end!#{Time.now.utc.xmlschema(6)}"
   end
