@@ -41,7 +41,7 @@ end
 if ARGV.include?('-e') # check rails env
   env=nil
   ARGV.each_with_index{|arg,i| env = ARGV[i+1] if arg == '-e' }
-  RAILS_ENV=env unless env.nil?
+  ENV['RAILS_ENV']=env unless env.nil?
 end
 
 if ARGV.include?('-d')
