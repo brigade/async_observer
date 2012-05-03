@@ -26,7 +26,7 @@ class << AsyncObserver::Queue
   DEFAULT_PRI = 512
   DEFAULT_FUZZ = 0
   DEFAULT_DELAY = 0
-  DEFAULT_TTR = 120
+  DEFAULT_TTR = 1800
   DEFAULT_TUBE = 'default'
 
   attr_accessor :queue, :app_version, :after_put
