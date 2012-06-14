@@ -20,6 +20,9 @@
 # Use the same pointer (and therefore same buffer) for stdout and stderr.
 $VERBOSE = nil; STDERR = $stderr = STDOUT = $stdout; $VERBOSE = false
 
+# Ruby 1.9 doesn't include '.' in $LOAD_PATH by default
+$LOAD_PATH << '.'
+
 require 'time'
 
 def load_rails_and_run
