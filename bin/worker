@@ -68,13 +68,12 @@ if ARGV.include?('-d')
       STDERR.puts "!! #{pidpath} exists and points to running process with pid #{pid}."
       STDERR.puts "!! Remove the pidfile if appropriate."
       STDERR.puts
+      exit(1)
     else
       STDERR.puts "Deleting stale pid file #{pidpath} containing pid #{pid}"
       File.delete(pidpath)
     end
-    exit(1)
   end
-
 
   require File.dirname(__FILE__) + '/../lib/async_observer/daemonize'
   AsyncObserver::Daemonize.detach(pidpath) do

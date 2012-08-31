@@ -17,12 +17,21 @@ module AsyncObserver; end
 
 class AsyncObserver::Daemonize
   def self.detach(pidfile='log/worker.pid',&block)
-    # daemonize, create a pipe to send status to the parent process, after the child has successfully started or failed
+    read_pipe, write_pipe = IO.pipe
+
+    # See: http://stackoverflow.com/q/881388
+    # First fork starts a throwaway process...
     fork do
-      Process.setsid
+      read_pipe.close
+
+      # ...which starts a new session (as the session leader)...
+      fail 'failed to detach from controlling term' unless Process.setsid
+
+      # ...and then fork again to let the session leader die.
       fork do
-        Process.setsid
-        File.open(pidfile, 'wb') {|f| f << Process.pid}
+        write_pipe.write(Process.pid)
+        write_pipe.close
+
         at_exit { File.unlink(pidfile) }
         File.umask 0000
         STDIN.reopen "/dev/null"
@@ -31,5 +40,11 @@ class AsyncObserver::Daemonize
         block.call
       end
     end
+
+    write_pipe.close
+
+    # Wait until grandchild process has started
+    File.open(pidfile, 'wb') {|f| f.write(read_pipe.read) }
+    read_pipe.close
   end
 end
