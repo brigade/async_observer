@@ -30,7 +30,10 @@ class AsyncObserver::Worker
   extend AsyncObserver::Util
   include AsyncObserver::Util
 
-  SLEEP_TIME = 60 if !defined?(SLEEP_TIME) # rails loads this file twice
+  unless defined?(SLEEP_TIME) # rails loads this file twice
+    SLEEP_TIME = 60
+    RESERVE_TIMEOUT = 1 # seconds
+  end
 
   class << self
     attr_accessor :finish
@@ -67,7 +70,6 @@ class AsyncObserver::Worker
   def main_loop()
     trap('TERM') { @stop = true }
     loop do
-      break if @stop
       safe_dispatch(get_job())
     end
   end
@@ -118,7 +120,7 @@ class AsyncObserver::Worker
   # connection as long as it stays fast. Otherwise, have no preference.
   def reserve_and_set_hint()
     t1 = Time.now.utc
-    return job = q_hint().reserve()
+    return job = q_hint().reserve(RESERVE_TIMEOUT)
   ensure
     t2 = Time.now.utc
     @q_hint = if brief?(t1, t2) and job then job.conn else nil end
@@ -131,14 +133,15 @@ class AsyncObserver::Worker
   def get_job()
     log_bracketed('worker-get-job') do
       loop do
+        raise Interrupt if @stop
         begin
           AsyncObserver::Queue.queue.connect()
           self.class.run_before_reserve
           return reserve_and_set_hint()
-        rescue Interrupt => ex
-          raise ex
-        rescue SignalException => ex
-          raise ex
+        rescue Beanstalk::TimedOut
+          # Timeout is expected
+        rescue SignalException
+          raise
         rescue Beanstalk::DeadlineSoonError
           # Do nothing; immediately try again, giving the user a chance to
           # clean up in the before_reserve hook.
