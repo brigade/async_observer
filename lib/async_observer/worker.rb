@@ -183,7 +183,7 @@ class AsyncObserver::Worker
         handle_error(job, ex)
       ensure
         job_duration_milliseconds = ((Time.now - start_time) * 1000).to_i
-        logger.info "#!job-duration!#{job_duration_milliseconds}!#{job[:code]}"
+        ::Rails.logger.info "#!job-duration!#{job_duration_milliseconds}!#{job[:code]}"
         flush_logger
       end
     end
