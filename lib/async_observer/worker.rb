@@ -23,6 +23,7 @@ rescue LoadError
 end
 require 'async_observer/queue'
 require 'async_observer/util'
+require 'date'
 
 module AsyncObserver; end
 
@@ -173,6 +174,7 @@ class AsyncObserver::Worker
         end
       end
       begin
+        start_time = Time.now
         return dispatch(job)
       rescue Interrupt => ex
         begin job.release() rescue :ok end
@@ -180,6 +182,8 @@ class AsyncObserver::Worker
       rescue Exception => ex
         handle_error(job, ex)
       ensure
+        job_duration_milliseconds = ((Time.now - start_time) * 1000).to_i
+        logger.info "#!job-duration!#{job_duration_milliseconds}!#{job[:code]}"
         flush_logger
       end
     end
