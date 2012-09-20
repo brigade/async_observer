@@ -29,10 +29,13 @@ class AsyncObserver::Daemonize
 
       # ...and then fork again to let the session leader die.
       fork do
-        write_pipe.write(Process.pid)
+        daemon_pid = Process.pid
+        write_pipe.write(daemon_pid)
         write_pipe.close
 
-        at_exit { File.unlink(pidfile) }
+        # Delete pidfile when this process exits (but not child processes)
+        at_exit { File.unlink(pidfile) if Process.pid == daemon_pid }
+
         File.umask 0000
         STDIN.reopen "/dev/null"
         STDOUT.reopen "/dev/null", "a"
