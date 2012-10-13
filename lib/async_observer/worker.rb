@@ -68,9 +68,17 @@ class AsyncObserver::Worker
     @stop = false
   end
 
+  def check_sentinel(file_name = '/var/run/philotic/sentinel/causes')
+    if File::exists?(file_name)
+      @stop = true
+    end
+  end
+
   def main_loop()
     trap('TERM') { @stop = true }
     loop do
+      # This is not really the main loop, the "real" main loop is in get_job()
+      break if @stop
       safe_dispatch(get_job())
     end
   end
@@ -107,7 +115,7 @@ class AsyncObserver::Worker
   def run()
     startup()
     main_loop()
-  rescue Interrupt
+  ensure
     shutdown()
   end
 
@@ -134,7 +142,8 @@ class AsyncObserver::Worker
   def get_job()
     log_bracketed('worker-get-job') do
       loop do
-        raise Interrupt if @stop
+        check_sentinel
+        break if @stop
         begin
           AsyncObserver::Queue.queue.connect()
           self.class.run_before_reserve
