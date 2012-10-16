@@ -143,7 +143,6 @@ class AsyncObserver::Worker
     log_bracketed('worker-get-job') do
       loop do
         check_sentinel
-        break if @stop
         begin
           AsyncObserver::Queue.queue.connect()
           self.class.run_before_reserve
