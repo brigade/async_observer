@@ -176,11 +176,7 @@ class AsyncObserver::Worker
   def safe_dispatch(job)
     log_bracketed('worker-dispatch', true) do
       ::Rails.logger.info "got #{job.inspect}:\n" + job.body
-      log_bracketed('job-stats') do
-        job.stats.each do |k,v|
-          ::Rails.logger.info "#{k}=#{v}"
-        end
-      end
+      ::Rails.logger.info jobs.stats.map { |k, v| "#{k}=#{v}" }.join(' ')
       begin
         start_time = Time.now
         return dispatch(job)
