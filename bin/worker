@@ -41,7 +41,7 @@ OptionParser.new do |opts|
   opts.on('-p', '--pid PIDFILE', 'Specify PID file path') do |p|
     @options[:pidpath] = p
   end
-end.parse!
+end.parse(ARGV)
 
 # Use the same pointer (and therefore same buffer) for stdout and stderr.
 $VERBOSE=false
