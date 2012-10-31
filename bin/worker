@@ -16,6 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+require 'optparse'
+
+@options = {
+  :pidpath => 'log/worker.pid'
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options]"
+
+  opts.on('-s', '--check-symlink SYMLINK',
+          'Check rails root against this symlink for restarts') do |s|
+    @options[:check_symlink] = s
+  end
+
+  opts.on('-e', '--environment ENVIRONMENT', 'Set the rails environment') do |e|
+    ENV['RAILS_ENV'] = e
+  end
+
+  opts.on('-d', '--daemon', 'Daemonize') do |d|
+    @options[:daemon] = true
+  end
+
+  opts.on('-p', '--pid PIDFILE', 'Specify PID file path') do |p|
+    @options[:pidfile] = p
+  end
+end.parse!
 
 # Use the same pointer (and therefore same buffer) for stdout and stderr.
 $VERBOSE=false
@@ -26,8 +52,6 @@ STDOUT.sync = true
 $LOAD_PATH << '.'
 
 require 'time'
-
-@options = {}
 
 def load_rails_and_run
   # Rails initialization.
@@ -44,29 +68,8 @@ def load_rails_and_run
   AsyncObserver::Worker.new(binding, @options).run()
 end
 
-def get_arg(precursor)
-  ARGV.each_with_index { |arg, i| return ARGV[i+1] if arg == precursor }
-  nil
-end
-
-# set environment
-if ARGV.include?('-e') # check rails env
-  env = get_arg('-e')
-  ENV['RAILS_ENV']=env unless env.nil?
-end
-
-# If present, we check to make sure that the directory we're being run from is
-# the one that's the 'current' deploy, as marked by the symlink.
-if ARGV.include?('--check-symlink')
-  @options[:check_symlink] = get_arg('--check-symlink')
-end
-
-if ARGV.include?('-d')
-  pidpath = 'log/worker.pid'
-  if ARGV.include?('--pid') # look up the pid path
-    pidpath = get_arg('--pid')
-    STDERR.puts "Missing pid file path!" and exit(1) if pidpath.nil?
-  end
+if @options[:daemon]
+  pidpath = @options[:pidpath]
   unless File.writable?(File.dirname(pidpath))
     STDERR.puts "#{pidpath} not writable!"
     exit(1)
