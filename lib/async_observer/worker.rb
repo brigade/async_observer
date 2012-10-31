@@ -126,6 +126,9 @@ class AsyncObserver::Worker
   def run()
     startup()
     main_loop()
+  rescue => ex
+    ::Rails.logger.error "Caught error in run, shutting down: #{ex}"
+    ::Rails.logger.error ex.backtrace.join("\n")
   ensure
     shutdown()
   end
