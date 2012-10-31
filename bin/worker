@@ -27,7 +27,7 @@ $LOAD_PATH << '.'
 
 require 'time'
 
-options = {}
+@options = {}
 
 def load_rails_and_run
   # Rails initialization.
@@ -41,7 +41,7 @@ def load_rails_and_run
     puts "#!load-rails!end!#{Time.now.utc.xmlschema(6)}"
   end
   require 'async_observer/worker'
-  AsyncObserver::Worker.new(binding, options).run()
+  AsyncObserver::Worker.new(binding, @options).run()
 end
 
 def get_arg(precursor)
@@ -58,7 +58,7 @@ end
 # If present, we check to make sure that the directory we're being run from is
 # the one that's the 'current' deploy, as marked by the symlink.
 if ARGV.include?('--check-symlink')
-  options[:check_symlink] = get_arg('--check-symlink')
+  @options[:check_symlink] = get_arg('--check-symlink')
 end
 
 if ARGV.include?('-d')
