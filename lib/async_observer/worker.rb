@@ -63,9 +63,10 @@ class AsyncObserver::Worker
     end
   end
 
-  def initialize(top_binding)
+  def initialize(top_binding, opts = {})
     @top_binding = top_binding
     @stop = false
+    @opts = opts
   end
 
   def check_sentinel(file_name = '/var/run/philotic/sentinel/causes')
@@ -74,11 +75,21 @@ class AsyncObserver::Worker
     end
   end
 
+  def check_current_symlink
+    symlinked_directory = File.realdirpath(@opts[:check_symlink])
+    if Dir.pwd != symlinked_directory
+      Dir.chdir symlinked_directory
+      ::Rails.logger.info "Found new app version in #{symlinked_directory}, re-execing"
+      exec($0, *ARGV)
+    end
+  end
+
   def main_loop()
     trap('TERM') { @stop = true }
     loop do
       # This is not really the main loop, the "real" main loop is in get_job()
       break if @stop
+      check_current_symlink if @opts[:check_symlink]
       safe_dispatch(get_job())
     end
   end

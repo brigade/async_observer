@@ -27,6 +27,8 @@ $LOAD_PATH << '.'
 
 require 'time'
 
+options = {}
+
 def load_rails_and_run
   # Rails initialization.
   # We do this here instead of using script/runner because script/runner
@@ -39,20 +41,30 @@ def load_rails_and_run
     puts "#!load-rails!end!#{Time.now.utc.xmlschema(6)}"
   end
   require 'async_observer/worker'
-  AsyncObserver::Worker.new(binding).run()
+  AsyncObserver::Worker.new(binding, options).run()
+end
+
+def get_arg(precursor)
+  ARGV.each_with_index { |arg, i| return ARGV[i+1] if arg == precursor }
+  nil
 end
 
 # set environment
 if ARGV.include?('-e') # check rails env
-  env=nil
-  ARGV.each_with_index{|arg,i| env = ARGV[i+1] if arg == '-e' }
+  env = get_arg('-e')
   ENV['RAILS_ENV']=env unless env.nil?
+end
+
+# If present, we check to make sure that the directory we're being run from is
+# the one that's the 'current' deploy, as marked by the symlink.
+if ARGV.include?('--check-symlink')
+  options[:check_symlink] = get_arg('--check-symlink')
 end
 
 if ARGV.include?('-d')
   pidpath = 'log/worker.pid'
   if ARGV.include?('--pid') # look up the pid path
-    ARGV.each_with_index{|arg,i| pidpath = ARGV[i+1] if arg == '--pid' }
+    pidpath = get_arg('--pid')
     STDERR.puts "Missing pid file path!" and exit(1) if pidpath.nil?
   end
   unless File.writable?(File.dirname(pidpath))
