@@ -69,12 +69,6 @@ class AsyncObserver::Worker
     @opts = opts
   end
 
-  def check_sentinel(file_name = '/var/run/philotic/sentinel/causes')
-    if File::exists?(file_name)
-      @stop = true
-    end
-  end
-
   def check_current_symlink
     symlinked_directory = File.realdirpath(@opts[:check_symlink])
     if Dir.pwd != symlinked_directory
@@ -156,7 +150,6 @@ class AsyncObserver::Worker
   def get_job()
     log_bracketed('worker-get-job') do
       loop do
-        check_sentinel
         begin
           AsyncObserver::Queue.queue.connect()
           self.class.run_before_reserve
