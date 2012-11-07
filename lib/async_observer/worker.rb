@@ -22,7 +22,6 @@ rescue LoadError
   # Ignore case where we don't have mysql
 end
 require 'async_observer/queue'
-require 'async_observer/util'
 require 'date'
 
 module AsyncObserver; end
@@ -89,17 +88,15 @@ class AsyncObserver::Worker
   end
 
   def startup()
-    log_bracketed('worker-startup') do
-      appver = AsyncObserver::Queue.app_version
-      ::Rails.logger.info "pid is #{$$}"
-      ::Rails.logger.info "app version is #{appver}"
-      mark_db_socket_close_on_exec()
-      if AsyncObserver::Queue.queue.nil?
-        ::Rails.logger.info 'no queue has been configured'
-        exit(1)
-      end
-      AsyncObserver::Queue.queue.watch(appver) if appver
+    appver = AsyncObserver::Queue.app_version
+    ::Rails.logger.info "pid is #{$$}"
+    ::Rails.logger.info "app version is #{appver}"
+    mark_db_socket_close_on_exec()
+    if AsyncObserver::Queue.queue.nil?
+      ::Rails.logger.info 'no queue has been configured'
+      exit(1)
     end
+    AsyncObserver::Queue.queue.watch(appver) if appver
     flush_logger
   end
 
@@ -112,9 +109,7 @@ class AsyncObserver::Worker
   end
 
   def shutdown()
-    log_bracketed('worker-shutdown') do
-      do_all_work()
-    end
+    do_all_work()
   end
 
   def run()
@@ -148,28 +143,26 @@ class AsyncObserver::Worker
   end
 
   def get_job()
-    log_bracketed('worker-get-job') do
-      loop do
-        begin
-          AsyncObserver::Queue.queue.connect()
-          self.class.run_before_reserve
-          return reserve_and_set_hint()
-        rescue Beanstalk::TimedOut
-          # Timeout is expected
-        rescue SignalException
-          raise
-        rescue Beanstalk::DeadlineSoonError
-          # Do nothing; immediately try again, giving the user a chance to
-          # clean up in the before_reserve hook.
-          ::Rails.logger.info 'Job deadline soon; you should clean up.'
-        rescue Exception => ex
-          @q_hint = nil # in case there's something wrong with this conn
-          ::Rails.logger.info(
-            "#{ex.class}: #{ex}\n" + ex.backtrace.join("\n"))
-          ::Rails.logger.info 'something is wrong. We failed to get a job.'
-          ::Rails.logger.info "sleeping for #{SLEEP_TIME}s..."
-          sleep(SLEEP_TIME)
-        end
+    loop do
+      begin
+        AsyncObserver::Queue.queue.connect()
+        self.class.run_before_reserve
+        return reserve_and_set_hint()
+      rescue Beanstalk::TimedOut
+        # Timeout is expected
+      rescue SignalException
+        raise
+      rescue Beanstalk::DeadlineSoonError
+        # Do nothing; immediately try again, giving the user a chance to
+        # clean up in the before_reserve hook.
+        ::Rails.logger.info 'Job deadline soon; you should clean up.'
+      rescue Exception => ex
+        @q_hint = nil # in case there's something wrong with this conn
+        ::Rails.logger.info(
+          "#{ex.class}: #{ex}\n" + ex.backtrace.join("\n"))
+        ::Rails.logger.info 'something is wrong. We failed to get a job.'
+        ::Rails.logger.info "sleeping for #{SLEEP_TIME}s..."
+        sleep(SLEEP_TIME)
       end
     end
   end
@@ -181,22 +174,20 @@ class AsyncObserver::Worker
   end
 
   def safe_dispatch(job)
-    log_bracketed('worker-dispatch', true) do
-      ::Rails.logger.info "got #{job.inspect}:\n" + job.body
-      ::Rails.logger.info job.stats.map { |k, v| "#{k}=#{v}" }.join(' ')
-      begin
-        start_time = Time.now
-        return dispatch(job)
-      rescue Interrupt => ex
-        begin job.release() rescue :ok end
-        raise ex
-      rescue Exception => ex
-        handle_error(job, ex)
-      ensure
-        job_duration_milliseconds = ((Time.now - start_time) * 1000).to_i
-        ::Rails.logger.info "#!job-duration!#{job_duration_milliseconds}!#{job[:code]}"
-        flush_logger
-      end
+    ::Rails.logger.info "got #{job.inspect}:\n" + job.body
+    ::Rails.logger.info job.stats.map { |k, v| "#{k}=#{v}" }.join(' ')
+    begin
+      start_time = Time.now
+      return dispatch(job)
+    rescue Interrupt => ex
+      begin job.release() rescue :ok end
+      raise ex
+    rescue Exception => ex
+      handle_error(job, ex)
+    ensure
+      job_duration_milliseconds = ((Time.now - start_time) * 1000).to_i
+      ::Rails.logger.info "#!job-duration!#{job_duration_milliseconds}!#{job[:code]}"
+      flush_logger
     end
   end
 
