@@ -27,8 +27,6 @@ require 'date'
 module AsyncObserver; end
 
 class AsyncObserver::Worker
-  extend AsyncObserver::Util
-  include AsyncObserver::Util
 
   unless defined?(SLEEP_TIME) # rails loads this file twice
     SLEEP_TIME = 60
