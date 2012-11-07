@@ -39,6 +39,7 @@ class AsyncObserver::Worker
     attr_accessor :finish
     attr_accessor :custom_error_handler
     attr_accessor :before_filter
+    attr_accessor :around_filter
     attr_writer :handle
 
     def handle
@@ -206,6 +207,10 @@ class AsyncObserver::Worker
     end
   end
 
+  def self.default_around_filter(job)
+    yield
+  end
+
   def self.default_handle_error(job, ex)
     ::Rails.logger.info "Job failed: #{job.server}/#{job.id}"
     ::Rails.logger.info("#{ex.class}: #{ex}\n" + ex.backtrace.join("\n"))
@@ -231,7 +236,10 @@ class AsyncObserver::Worker
   end
 
   def run_code(job)
-    eval(job.ybody[:code], @top_binding, "(beanstalk job #{job.id})", 1)
+    f = self.class.around_filter || self.class.default_around_filter
+    f.call(job) do
+      eval(job.ybody[:code], @top_binding, "(beanstalk job #{job.id})", 1)
+    end
   end
 
   def async_observer_job?(job)
