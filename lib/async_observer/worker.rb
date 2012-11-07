@@ -234,7 +234,7 @@ class AsyncObserver::Worker
   end
 
   def run_code(job)
-    f = self.class.around_filter || self.class.default_around_filter
+    f = self.class.around_filter || self.class.method(:default_around_filter)
     f.call(job) do
       eval(job.ybody[:code], @top_binding, "(beanstalk job #{job.id})", 1)
     end
