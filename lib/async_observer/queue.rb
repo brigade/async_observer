@@ -29,7 +29,7 @@ class << AsyncObserver::Queue
   DEFAULT_TTR = 1800
   DEFAULT_TUBE = 'default'
 
-  attr_accessor :queue, :app_version, :after_put
+  attr_accessor :queue, :app_version, :after_put, :safe_sync
 
   # This is a fake worker instance for running jobs synchronously.
   def sync_worker()
@@ -41,7 +41,11 @@ class << AsyncObserver::Queue
   def sync_run(obj)
     body = YAML.dump(obj)
     job = Beanstalk::Job.new(AsyncObserver::FakeConn.new(), 0, body)
-    sync_worker.dispatch(job)
+    if safe_sync
+      sync_worker.safe_dispatch(job)
+    else
+      sync_worker.dispatch(job)
+    end
     sync_worker.do_all_work()
     return 0, '0.0.0.0'
   end
