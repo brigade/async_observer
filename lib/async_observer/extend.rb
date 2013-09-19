@@ -28,13 +28,15 @@ CLASSES_TO_EXTEND = [
   Symbol,
 ]
 
-module AsyncObserver::Extensions
-  def async_send(selector, *args)
-    async_send_opts(selector, {}, *args)
-  end
+module AsyncObserver
+  module Extensions
+    def async_send(selector, *args)
+      async_send_opts(selector, {}, *args)
+    end
 
-  def async_send_opts(selector, opts, *args)
-    AsyncObserver::Queue.put_call!(self, selector, opts, args)
+    def async_send_opts(selector, opts, *args)
+      ::AsyncObserver::Queue.put_call!(self, selector, opts, args)
+    end
   end
 end
 
