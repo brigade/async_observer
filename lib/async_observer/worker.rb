@@ -167,7 +167,6 @@ class AsyncObserver::Worker
   end
 
   def dispatch(job)
-    ActiveRecord::Base.verify_active_connections!
     return run_ao_job(job) if async_observer_job?(job)
     return run_other(job)
   end
