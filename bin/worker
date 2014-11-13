@@ -55,11 +55,10 @@ require 'time'
 
 def load_rails_and_run
   # Rails initialization.
-  # We do this here instead of using script/runner because script/runner
-  # breaks __FILE__, which we use below.
+  # This executable only works from the root directory of a Rails application.
   begin
     puts "#!load-rails!begin!#{Time.now.utc.xmlschema(6)}"
-    require File.expand_path(File.dirname(__FILE__) + '/../../../config/environment')
+    require File.expand_path('./config/environment')
     puts "RAILS_ROOT=#{Rails.root.inspect}"
   ensure
     puts "#!load-rails!end!#{Time.now.utc.xmlschema(6)}"
@@ -90,7 +89,7 @@ if @options[:daemon]
     end
   end
 
-  require File.dirname(__FILE__) + '/../lib/async_observer/daemonize'
+  require 'async_observer/daemonize'
   AsyncObserver::Daemonize.detach(pidpath) do
     load_rails_and_run
   end
