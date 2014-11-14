@@ -71,18 +71,8 @@ class AsyncObserver::Worker
     symlinked_directory = File.realdirpath(@opts[:check_symlink])
     if Dir.pwd != symlinked_directory
       Dir.chdir symlinked_directory
-      ::Rails.logger.info "Found new app version in #{symlinked_directory}, re-execing"
+      ::Rails.logger.info "Found new app version in #{symlinked_directory}, re-execing: #{$0} #{ARGV.join(' ')}"
       exec($0, *ARGV)
-    end
-  end
-
-  def main_loop()
-    trap('TERM') { @stop = true }
-    loop do
-      # This is not really the main loop, the "real" main loop is in get_job()
-      break if @stop
-      check_current_symlink if @opts[:check_symlink]
-      safe_dispatch(get_job())
     end
   end
 
@@ -111,9 +101,10 @@ class AsyncObserver::Worker
     do_all_work()
   end
 
-  def run()
-    startup()
-    main_loop()
+  def run
+    trap('TERM') { @stop = true }
+    startup
+    main_loop
   rescue => ex
     ::Rails.logger.error "Caught error in run, shutting down: #{ex}"
     ::Rails.logger.error ex.backtrace.join("\n")
@@ -141,13 +132,14 @@ class AsyncObserver::Worker
     ((t2 - t1) * 100).to_i.abs < 10
   end
 
-  def get_job()
+  def main_loop
     loop do
-      break if @stop
+      job = nil
+
       begin
         AsyncObserver::Queue.queue.connect()
         self.class.run_before_reserve
-        return reserve_and_set_hint()
+        job = reserve_and_set_hint()
       rescue Beanstalk::TimedOut
         # Timeout is expected
       rescue SignalException
@@ -164,6 +156,11 @@ class AsyncObserver::Worker
         ::Rails.logger.info "sleeping for #{SLEEP_TIME}s..."
         sleep(SLEEP_TIME)
       end
+
+      safe_dispatch(job) if job
+
+      break if @stop
+      check_current_symlink if @opts[:check_symlink]
     end
   end
 
