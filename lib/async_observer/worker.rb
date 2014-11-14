@@ -69,9 +69,10 @@ class AsyncObserver::Worker
 
   def check_current_symlink
     symlinked_directory = File.realdirpath(@opts[:check_symlink])
-    if Dir.pwd != symlinked_directory
-      Dir.chdir symlinked_directory
+
+    if Dir.pwd != symlinked_directory && File.directory?(symlinked_directory)
       ::Rails.logger.info "Found new app version in #{symlinked_directory}, re-execing: #{$0} #{ARGV.join(' ')}"
+      Dir.chdir symlinked_directory
       exec($0, *ARGV)
     end
   end

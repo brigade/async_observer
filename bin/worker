@@ -75,8 +75,9 @@ if @options[:daemon]
   end
 
   if File.exist?(pidpath)
-    pid = File.new(pidpath).readline
-    if File.exists?("/proc/#{pid}") # something is running with that pid
+    pid = File.new(pidpath).read.to_i
+
+    if File.exists?("/proc/#{pid}") && Process.pid != pid
       STDERR.puts
       STDERR.puts "!! Error"
       STDERR.puts "!! #{pidpath} exists and points to running process with pid #{pid}."
