@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.homepage = 'https://github.com/causes/async_observer'
   gem.license = 'MIT'
   gem.required_ruby_version = '>= 1.9.3'
-  gem.version = '0.2.l'
+  gem.version = '0.2.2'
   gem.executables << 'worker'
   gem.files = Dir['bin/*'] + Dir['lib/{,**/}*']
   gem.description = 'Async Observer'

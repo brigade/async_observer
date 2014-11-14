@@ -143,6 +143,7 @@ class AsyncObserver::Worker
 
   def get_job()
     loop do
+      break if @stop
       begin
         AsyncObserver::Queue.queue.connect()
         self.class.run_before_reserve
