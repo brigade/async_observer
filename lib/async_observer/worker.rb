@@ -182,8 +182,9 @@ class AsyncObserver::Worker
     rescue Exception => ex
       handle_error(job, ex)
     ensure
+      job_code = job[:code] rescue 'UNKONWN'
       job_duration_milliseconds = ((Time.now - start_time) * 1000).to_i
-      ::Rails.logger.info "#!job-duration!#{job_duration_milliseconds}!#{job[:code]}"
+      ::Rails.logger.info "#!job-duration!#{job_duration_milliseconds}!#{job_code}"
       flush_logger
     end
   end
