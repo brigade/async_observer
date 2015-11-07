@@ -180,7 +180,13 @@ class AsyncObserver::Worker
       begin job.release() rescue :ok end
       raise ex
     rescue Exception => ex
-      handle_error(job, ex)
+      begin
+        handle_error(job, ex)
+      rescue Exception => ex
+        ::Rails.logger.error 'Error handler crashed!'
+        ::Rails.logger.error ex.message
+        ::Rails.logger.error ex.backtrace.join("\n")
+      end
     ensure
       job_code = job[:code] rescue 'UNKONWN'
       job_duration_milliseconds = ((Time.now - start_time) * 1000).to_i
